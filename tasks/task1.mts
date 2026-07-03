@@ -9,18 +9,18 @@ import {
 import { z } from "zod";
 
 const fetchWeather = tool(
-  async ({ city}: { city: string}) => {
+  async ({ cityName }: { cityName: string }) => {
     return {
-      city,
-      temperature: 25,
-      condition: "sunny",
+      cityName,
+      temp: 25,
+      conditions: "sunny",
     };
   },
   {
     name: "fetchWeather",
     description: "Fetches the current weather for a given city",
     schema: z.object({
-      city: z.string().describe("The city name, for example Cairo"),
+      cityName: z.string().describe("The city name, for example Cairo"),
     }),
   }
 );
@@ -30,9 +30,9 @@ const model = new ChatOllama({
 }).bindTools([fetchWeather]);
 
 const WeatherReportExtraction = z.object({
-    city: z.string().describe("The city name, for example Cairo"),
-    temperature: z.number().describe("The temperature in Celsius"),
-    condition: z.string().describe("The weather condition, for example sunny"),
+    cityName: z.string().describe("The city name, for example Cairo"),
+    temp: z.number().describe("The temperature in Celsius"),
+    conditions: z.string().describe("The weather condition, for example sunny"),
 });
 
 const messages: BaseMessage[] = [];
@@ -43,19 +43,19 @@ const userInput = [
 ]
 
 messages.push(
-    new HumanMessage(userInput[1]!)
+    new HumanMessage("should i pack a heavy jacket for my trip to cairo today?")
 );
 
-const response = await model.invoke(messages);
+const scenarioA = await model.invoke(messages);
 
-messages.push(response);
+messages.push(scenarioA);
 
-if (response.tool_calls?.length){
+if (scenarioA.tool_calls?.length){
     console.log("[system] caught LLM request to run tool fetchWeather");
     
-    const toolMessage = await fetchWeather.invoke({city: response.tool_calls[0]?.args.city});
+    const toolMessage = await fetchWeather.invoke({cityName: scenarioA.tool_calls[0]?.args.cityName});
     messages.push(new ToolMessage({
-        tool_call_id: response.tool_calls[0]?.id ?? "",
+        tool_call_id: scenarioA.tool_calls[0]?.id ?? "",
         content: JSON.stringify(toolMessage),
     }));
     const stream = await model.stream(messages);
@@ -66,22 +66,22 @@ if (response.tool_calls?.length){
         }
     }
     console.log("");
-}else{
-    console.log("[system] no tool calls were made by the LLM");
-    const stream = await model.stream(messages);
+}
 
-    for await (const chunk of stream) {
+const scenarioB = await model.stream("why does humidity feel different near coastal cities compared to inland deserts?");
+
+
+for await (const chunk of scenarioB) {
         if (chunk.content && typeof chunk.content === "string"){
             process.stdout.write(chunk.content);
         }
     }
-    console.log("");
-}
+console.log("");
 
 const structuredModel = new ChatOllama({
     model: "qwen3:8b",
 }).withStructuredOutput(WeatherReportExtraction);
 
-const logMessage = await structuredModel.invoke("log the followoing stats into the database: Ryadh is hot at 42C, Tokyo is clear at 21C");
+const scenarioC = await structuredModel.invoke("log the followoing stats into the database: Ryadh is hot at 42C, Tokyo is clear at 21C");
 
-console.log(logMessage);
+console.log(scenarioC);
