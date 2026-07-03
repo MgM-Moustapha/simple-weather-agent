@@ -68,20 +68,20 @@ if (scenarioA.tool_calls?.length){
     console.log("");
 }
 
-const scenarioB = await model.stream("why does humidity feel different near coastal cities compared to inland deserts?");
+const scenarioC = await model.stream("why does humidity feel different near coastal cities compared to inland deserts?");
 
 
-for await (const chunk of scenarioB) {
+for await (const chunk of scenarioC) {
         if (chunk.content && typeof chunk.content === "string"){
             process.stdout.write(chunk.content);
         }
-    }
+};
 console.log("");
 
 const structuredModel = new ChatOllama({
     model: "qwen3:8b",
 }).withStructuredOutput(WeatherReportExtraction);
 
-const scenarioC = await structuredModel.invoke("log the followoing stats into the database: Ryadh is hot at 42C, Tokyo is clear at 21C");
+const scenarioB = await structuredModel.invoke("log the followoing stats into the database: Ryadh is hot at 42C, Tokyo is clear at 21C");
 
-console.log(scenarioC);
+console.log(scenarioB);
