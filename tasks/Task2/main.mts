@@ -75,6 +75,8 @@ chatHistory.push(
     new SystemMessage("you are a helpful ai agent, you have to return to the previous messages if the user is referring to them or using prounous like 'there'.")
 )
 
+const maxMessages = 6;
+
 async function main() {
   while (true) {
     const answer = await rl.question("How can i assist you?(Q to quit):  ");
@@ -111,7 +113,7 @@ async function main() {
     } else {
       console.log(response.content)
     }
-    chatHistory = pruneHistory(chatHistory, 6)
+    chatHistory = pruneHistory(chatHistory, maxMessages)
   }
 
   rl.close();
